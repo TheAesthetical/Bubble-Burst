@@ -12,7 +12,8 @@ class Bubble:
         self.Y = y
 
         self.BubbleImage = pygame.transform.scale(self.BubbleImage , (TileEdge, TileEdge))
-        for i in range(len(self.BubbleImages)):
-            pygame.transform.scale(self.BubbleImages[i] , (TileEdge, TileEdge))
-        self.BubbleRec = pygame.Rect((self.X , self.Y) , (TileEdge , TileEdge))
 
+        for i in range(len(self.BubbleImages)):
+            self.BubbleImages[i] = pygame.transform.scale(self.BubbleImages[i] , (TileEdge, TileEdge))
+
+        self.BubbleRec = pygame.Rect((self.X , self.Y) , (TileEdge , TileEdge))

@@ -1,13 +1,17 @@
-# Example file showing a basic pygame "game loop"
+#  Example file showing a basic pygame "game loop"
 import pygame 
 import random
 import os
+import time
+import itertools
 
 from Bubble import Bubble
 
 pygame.init()
 
 # pygame setup
+
+Framerate = 60
 
 NoTilesX = 16
 NoTilesY = 12
@@ -29,6 +33,8 @@ BubbleIndex = 0
 BubblesPopped = 0
 PulseIndex = 0
 
+Timer = 60
+
 Screen = pygame.display.set_mode((TileEdge*NoTilesX, TileEdge*NoTilesY))
 pygame.display.set_caption('Bubble Burst')
 
@@ -41,7 +47,7 @@ Background = pygame.transform.scale(Background , (TileEdge*NoTilesX, TileEdge*No
 Base = pygame.image.load('assets/tiles/basecloud.png')
 Base = pygame.transform.scale(Base , (TileEdge*NoTilesX, TileEdge*4))
 
-BubbleList = [Bubble]
+BubbleList = []
 
 BubbleBackdrop = pygame.Surface((Screen.get_width() , Screen.get_height() - Base.get_height()), pygame.SRCALPHA, 32).convert_alpha()
 
@@ -52,10 +58,23 @@ PlayerPos = pygame.Vector2(((Screen.get_width() / 2) - (SpriteX / 2)), (((Screen
 
 PlayerRec = pygame.Rect(PlayerPos , (SpriteX, SpriteY))
 
+BubbleFont = "assets/fonts/BubbleBobble.ttf"
+Font = pygame.font.Font(BubbleFont, 20 * ZoomMultiplier)
+FontColour = (71, 131, 150)
+
+ScoreText = Font.render(f"Score: {BubblesPopped}", False, FontColour)
+ScoreBox = ScoreText .get_rect(center=(Base.get_width() / 4 ,(Screen.get_height() - (Base.get_height() / 2))))
+
+TimerText = Font.render(f"Score: {BubblesPopped}", False, FontColour)
+TimerBox = ScoreText .get_rect(center=(Base.get_width() - (30 *  ZoomMultiplier) ,(Screen.get_height() - (Base.get_height() / 2))))
+
+RUNNING, PAUSE = 0, 1
+
+State = RUNNING
+
 def backgroundGen():
     global BackgroundIndex
     BackgroundIndex += 0.02
-    Filename = ""
 
     Background = pygame.image.load("assets/tiles/background1.png")
 
@@ -108,6 +127,8 @@ def checkInputs():
     PlayerRec = pygame.Rect(PlayerPos , (SpriteX, SpriteY))
     Player = pygame.transform.scale(Player , (SpriteX, SpriteY))
 
+    Screen.blit(Player , PlayerPos)
+
 def checkOOB():
     if PlayerPos.x > Screen.get_width():
         PlayerPos.x = Screen.get_width()
@@ -124,7 +145,7 @@ def genBubble():
         animateBubble(BubbleList[i])
 
     if round(BubbleIndex,1) < 1:
-        BubbleIndex += 0.025
+        BubbleIndex += 0.04
     elif round(BubbleIndex,1) >= 1:
         NewBubble = Bubble(TileEdge,random.randint(0,(TileEdge*NoTilesX) - TileEdge),random.randint(0,((TileEdge*NoTilesY) - Base.get_height() - TileEdge)))
 
@@ -142,18 +163,38 @@ def checkPop():
         if(PlayerRec.colliderect(BubbleList[i].BubbleRec)):
             BubbleList.remove(BubbleList[i])
             BubblesPopped += 1
+            print(BubblesPopped)
             break
 
 def animateBubble(AnimatedBubble):
     global PulseIndex
 
-    PulseIndex += 0.02
+    PulseIndex += 0.01
 
     if round(PulseIndex , 1) < 1:
         AnimatedBubble.BubbleImage = AnimatedBubble.BubbleImages[0]
     if round(PulseIndex , 1) == 2:
-        AnimatedBubble.BubbleImage = AnimatedBubble.BubbleImages[0]
+        AnimatedBubble.BubbleImage = AnimatedBubble.BubbleImages[1]
+    if round(PulseIndex , 1) == 3:
         PulseIndex = 0
+
+def drawScore():
+    global ScoreText
+    
+    ScoreText = Font.render(f"Score: {BubblesPopped}", False, FontColour)
+    Screen.blit(ScoreText , ScoreBox)
+
+def doTimer():
+        global Timer
+        global TimerText
+
+        if Timer < 0:
+            Timer = 0
+        else:
+           Timer -= 1 / Framerate
+
+        TimerText = Font.render(f"{round(Timer,1)}", False, FontColour)
+        Screen.blit(TimerText , TimerBox)
 
 while running:
 
@@ -161,16 +202,18 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    backgroundGen()
-    checkInputs()
-    checkOOB()
-    genBubble()
-    checkPop()
+    if State == RUNNING:
+        backgroundGen()
+        checkInputs()
+        checkOOB()
+        genBubble()
+        checkPop()
+        drawScore()
+        doTimer()
 
-    Screen.blit(Player , PlayerPos)
+    if(round(Timer , 1) == 0):
+        State = PAUSE
 
     pygame.display.update()
 
-    Clock.tick(60)  # limits FPS to 60
-
-pygame.quit()
+    Clock.tick(Framerate)
