@@ -68,6 +68,13 @@ ScoreBox = ScoreText .get_rect(center=(Base.get_width() / 4 ,(Screen.get_height(
 TimerText = Font.render(f"Score: {BubblesPopped}", False, FontColour)
 TimerBox = ScoreText .get_rect(center=(Base.get_width() - (30 *  ZoomMultiplier) ,(Screen.get_height() - (Base.get_height() / 2))))
 
+HighScore = 0
+
+HighscoreFont = pygame.font.Font(BubbleFont, 6 * ZoomMultiplier)
+HighscoreFontColour = (10, 10, 10)
+HighscoreText = Font.render(f"High Score: {HighScore}", False, HighscoreFontColour)
+HighscoreBox = HighscoreText.get_rect(center=((60*ZoomMultiplier),(15*ZoomMultiplier)))
+
 RUNNING, PAUSE = 0, 1
 
 State = RUNNING
@@ -163,7 +170,6 @@ def checkPop():
         if(PlayerRec.colliderect(BubbleList[i].BubbleRec)):
             BubbleList.remove(BubbleList[i])
             BubblesPopped += 1
-            print(BubblesPopped)
             break
 
 def animateBubble(AnimatedBubble):
@@ -185,16 +191,39 @@ def drawScore():
     Screen.blit(ScoreText , ScoreBox)
 
 def doTimer():
-        global Timer
-        global TimerText
+    global Timer
+    global TimerText
 
-        if Timer < 0:
-            Timer = 0
-        else:
-           Timer -= 1 / Framerate
+    if Timer < 0:
+        Timer = 0
+    else:
+        Timer -= 1 / Framerate
 
-        TimerText = Font.render(f"{round(Timer,1)}", False, FontColour)
-        Screen.blit(TimerText , TimerBox)
+    TimerText = Font.render(f"{round(Timer,1)}", False, FontColour)
+    Screen.blit(TimerText , TimerBox)
+
+def drawHighScore():
+    global HighscoreText
+    global HighscoreBox
+
+    with open("data/highscore.txt", "r") as File:
+        CurrentHighScore = File.readlines() 
+
+    HighscoreText = HighscoreFont.render(f"High Score: {CurrentHighScore[0]}", False, HighscoreFontColour)
+    Screen.blit(HighscoreText , HighscoreBox)
+
+def checkHighScore():
+    global BubblesPopped
+
+    with open("data/highscore.txt", "r") as File:
+        CurrentHighScore = File.readlines() 
+
+        print(int(CurrentHighScore[0]))
+        print(BubblesPopped)
+
+    if BubblesPopped > int(CurrentHighScore[0]):
+        with open("data/highscore.txt", "w") as File:
+            File.write(str(BubblesPopped))
 
 while running:
 
@@ -210,9 +239,11 @@ while running:
         checkPop()
         drawScore()
         doTimer()
+        drawHighScore()
 
     if(round(Timer , 1) == 0):
         State = PAUSE
+        checkHighScore()
 
     pygame.display.update()
 
